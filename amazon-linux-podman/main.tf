@@ -73,7 +73,7 @@ resource "aws_security_group" "web" {
 
 # --- EC2 Instance ---
 resource "aws_instance" "this" {
-  ami                         = "ami-049442a6cf8319180"
+  ami                         = "ami-06297e16b71156b52"
   instance_type               = var.instance_type
   subnet_id                   = local.subnet_id
   vpc_security_group_ids      = [aws_security_group.web.id]
@@ -83,13 +83,17 @@ resource "aws_instance" "this" {
   # No SSH Keys: SSM access only
   key_name = null
 
-  # Install Podman + run sample HTTP container
+  # Install Podman
   user_data = <<-EOF
     #!/bin/bash
     set -eux
-    apt-get update -y
-    apt-get install -y podman
-    podman run -d --name hello -p 80:80 docker.io/crccheck/hello-world
+    dnf update -y
+    dnf install -y wget tar
+    cd /tmp
+    wget https://github.com/containers/podman/releases/download/v5.7.0-rc3/podman-remote-static-linux_amd64.tar.gz
+    tar -xvzf podman-remote-static-linux_amd64.tar.gz
+    mv bin/* /usr/local/bin/
+    /usr/local/bin/podman-remote-static-linux_amd64 --version || true
   EOF
 
   tags = { Name = var.name }

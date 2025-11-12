@@ -73,7 +73,7 @@ resource "aws_security_group" "web" {
 
 # --- EC2 Instance ---
 resource "aws_instance" "this" {
-  ami                         = "ami-049442a6cf8319180"
+  ami                         = "ami-06297e16b71156b52"
   instance_type               = var.instance_type
   subnet_id                   = local.subnet_id
   vpc_security_group_ids      = [aws_security_group.web.id]
@@ -83,13 +83,23 @@ resource "aws_instance" "this" {
   # No SSH Keys: SSM access only
   key_name = null
 
-  # Install Podman + run sample HTTP container
+  # Install Docker
   user_data = <<-EOF
     #!/bin/bash
     set -eux
-    apt-get update -y
-    apt-get install -y podman
-    podman run -d --name hello -p 80:80 docker.io/crccheck/hello-world
+    dnf update -y
+    dnf install -y dnf-plugins-core
+    cat >/etc/yum.repos.d/docker-ce.repo <<'REPO'
+    [docker-ce-stable]
+    name=Docker CE Stable - RHEL 9
+    baseurl=https://download.docker.com/linux/rhel/9/$basearch/stable
+    enabled=1
+    gpgcheck=1
+    gpgkey=https://download.docker.com/linux/rhel/gpg
+    REPO
+    dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    systemctl enable --now docker
+    usermod -aG docker ec2-user || true
   EOF
 
   tags = { Name = var.name }
