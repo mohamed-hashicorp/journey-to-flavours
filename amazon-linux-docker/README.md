@@ -11,10 +11,6 @@ What we will do?
 - Check what has been created
 - Delete infrastructure
 
-
-For more info, please see Chapter 2, "Getting started with Terraform", of 
-*[Terraform: Up and Running](http://www.terraformupandrunning.com)*.
-
 ## Check Prerequistes
 
 This guide was executed on MacOS so it assumes the following:
