@@ -2,12 +2,40 @@ terraform {
   required_providers {
     aws = {
         source = "hashicorp/aws"
-        version = "~>5.0"
+        version = "~>6.0"
     }
   }
 }
+
 provider "aws" {
     region = var.region 
+}
+
+# --- Data Sources to capture the latest Amazon Linux 2023 AMI ---
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+
+  owners = ["137112412989"] # Amazon
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+      name = "architecture"
+      values = [ "x86_64" ]
+  }
 }
 
 data "aws_vpc" "default" {
@@ -73,7 +101,7 @@ resource "aws_security_group" "web" {
 
 # --- EC2 Instance ---
 resource "aws_instance" "this" {
-  ami                         = "ami-06297e16b71156b52"
+  ami                         = data.aws_ami.amazon_linux.id
   instance_type               = var.instance_type
   subnet_id                   = local.subnet_id
   vpc_security_group_ids      = [aws_security_group.web.id]
@@ -84,23 +112,7 @@ resource "aws_instance" "this" {
   key_name = null
 
   # Install Docker
-  user_data = <<-EOF
-    #!/bin/bash
-    set -eux
-    dnf update -y
-    dnf install -y dnf-plugins-core
-    cat >/etc/yum.repos.d/docker-ce.repo <<'REPO'
-    [docker-ce-stable]
-    name=Docker CE Stable - RHEL 9
-    baseurl=https://download.docker.com/linux/rhel/9/$basearch/stable
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://download.docker.com/linux/rhel/gpg
-    REPO
-    dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    systemctl enable --now docker
-    usermod -aG docker ec2-user || true
-  EOF
+  user_data = file("${path.module}/cloud-init.yaml")
 
   tags = { Name = var.name }
 }

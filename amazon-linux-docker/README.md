@@ -1,17 +1,9 @@
-# Amazon Linux with Docker installed
+# Amazon Linux with Docker installed on AWS
 
 This folder contains an example [Terraform](https://www.terraform.io/) configuration that deploys a single server (using 
 [EC2](https://aws.amazon.com/ec2/)) in an [Amazon Web Services (AWS) account](http://aws.amazon.com/). 
 
-What we will do?
-
-- Check pre-requisites
-- Clone repo
-- Create infrastructure
-- Check what has been created
-- Delete infrastructure
-
-## Check Prerequistes
+## Prerequistes
 
 This guide was executed on MacOS so it assumes the following:
 - You have Git installed.
@@ -27,7 +19,7 @@ git clone https://github.com/mohamed-hashicorp/journey-to-flavours
 
 - Change the directory to amazon-linux-podman
 ```
-cd amazon-linux-docker
+cd journey-to-flavours/amazon-linux-docker
 ```
 
 ## Create Infrastructure
@@ -56,7 +48,7 @@ Do you want to perform these actions?
 ```
 
 
-## Check was created
+## Validate
 - To check your created server, open your browser.
 - Login to your [AWS console](https://aws.amazon.com/console) with your AWS credentials.
 - In the search bar at the top, type EC2 and click on it.
@@ -78,5 +70,5 @@ terraform destroy
 ```
 - Once the resources are destoryed you will see:
 ```
-Destroy complete! Resources: 1 destroyed
+Destroy complete! Resources: 5 destroyed
 ```

@@ -1,0 +1,16 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - wget
+  - tar
+
+runcmd:
+  - |
+      set -eux
+      cd /tmp
+      wget https://github.com/containers/podman/releases/download/v5.7.0-rc3/podman-remote-static-linux_amd64.tar.gz
+      tar -xvzf podman-remote-static-linux_amd64.tar.gz
+      mv bin/* /usr/local/bin/
+      /usr/local/bin/podman-remote-static-linux_amd64 --version || true

@@ -2,12 +2,39 @@ terraform {
   required_providers {
     aws = {
         source = "hashicorp/aws"
-        version = "~>5.0"
+        version = "~>6.0"
     }
   }
 }
 provider "aws" {
     region = var.region 
+}
+
+# --- Data Sources to capture the latest Amazon Linux 2023 AMI ---
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+
+  owners = ["137112412989"] # Amazon
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+      name = "architecture"
+      values = [ "x86_64" ]
+  }
 }
 
 data "aws_vpc" "default" {
@@ -73,7 +100,7 @@ resource "aws_security_group" "web" {
 
 # --- EC2 Instance ---
 resource "aws_instance" "this" {
-  ami                         = "ami-06297e16b71156b52"
+  ami                         = data.aws_ami.amazon_linux.id
   instance_type               = var.instance_type
   subnet_id                   = local.subnet_id
   vpc_security_group_ids      = [aws_security_group.web.id]
@@ -84,17 +111,7 @@ resource "aws_instance" "this" {
   key_name = null
 
   # Install Podman
-  user_data = <<-EOF
-    #!/bin/bash
-    set -eux
-    dnf update -y
-    dnf install -y wget tar
-    cd /tmp
-    wget https://github.com/containers/podman/releases/download/v5.7.0-rc3/podman-remote-static-linux_amd64.tar.gz
-    tar -xvzf podman-remote-static-linux_amd64.tar.gz
-    mv bin/* /usr/local/bin/
-    /usr/local/bin/podman-remote-static-linux_amd64 --version || true
-  EOF
+  user_data = file("${path.module}/cloud-init.yaml")
 
   tags = { Name = var.name }
 }
