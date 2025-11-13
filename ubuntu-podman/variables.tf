@@ -5,7 +5,7 @@ variable "region" {
 
 variable "name" {
   type    = string
-  default = "auto-mohamed"
+  default = "my-vm"
 }
 
 variable "instance_type" {

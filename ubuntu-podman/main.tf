@@ -10,6 +10,28 @@ provider "aws" {
     region = var.region 
 }
 
+# --- Data Sources to capture the latest Ubuntu AMI ---
+data "aws_ami" "ubuntu_noble" {
+  most_recent = true
+
+  owners = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+}
+
 data "aws_vpc" "default" {
   default = true
 }
@@ -73,7 +95,7 @@ resource "aws_security_group" "web" {
 
 # --- EC2 Instance ---
 resource "aws_instance" "this" {
-  ami                         = "ami-049442a6cf8319180"
+  ami                         = data.aws_ami.ubuntu_noble.id
   instance_type               = var.instance_type
   subnet_id                   = local.subnet_id
   vpc_security_group_ids      = [aws_security_group.web.id]
@@ -83,14 +105,7 @@ resource "aws_instance" "this" {
   # No SSH Keys: SSM access only
   key_name = null
 
-  # Install Podman + run sample HTTP container
-  user_data = <<-EOF
-    #!/bin/bash
-    set -eux
-    apt-get update -y
-    apt-get install -y podman
-    podman run -d --name hello -p 80:80 docker.io/crccheck/hello-world
-  EOF
-
+  # Install Podman 
+  user_data = file("${path.module}/cloud-init.yaml")
   tags = { Name = var.name }
 }

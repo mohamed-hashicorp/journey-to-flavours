@@ -1,0 +1,13 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - podman
+
+runcmd:
+  # Verify podman install and run a test container
+  - podman --version
