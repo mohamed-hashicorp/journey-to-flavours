@@ -1,21 +1,38 @@
 #cloud-config
 package_update: true
-package_upgrade: true
+packages:
+  - dnf-plugins-core
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+system_info:
+  default_user:
+    name: ec2-user
+    groups: [docker]
+
+users:
+  - default
+
+services:
+  systemd:
+    enabled:
+      - docker.service
+    running:
+      - docker.service 
+
+write_files:
+  - path: /etc/yum.repos.d/docker-ce.repo
+    permissions: '0644'
+    content: |
+      [docker-ce-stable]
+      name=Docker CE Stable - RHEL 9
+      baseurl=https://download.docker.com/linux/rhel/9/$basearch/stable
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://download.docker.com/linux/rhel/gpg
 
 runcmd:
-  - dnf update -y
-  - dnf install -y dnf-plugins-core
-
-  - |
-    cat >/etc/yum.repos.d/docker-ce.repo <<'REPO'
-    [docker-ce-stable]
-    name=Docker CE Stable - RHEL 9
-    baseurl=https://download.docker.com/linux/rhel/9/$basearch/stable
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://download.docker.com/linux/rhel/gpg
-    REPO
-
-  - dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
   - systemctl enable --now docker
-  - usermod -aG docker ec2-user || true

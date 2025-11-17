@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
         source = "hashicorp/aws"
-        version = "~>6.0"
+        version = "~>5.0"
     }
   }
 }
@@ -93,6 +93,15 @@ resource "aws_security_group" "web" {
   }
 }
 
+data "cloudinit_config" "user_data" {
+  part {
+    content_type = "text/cloud-config"
+    content      = templatefile("${path.module}/cloud-init.yaml", {
+      instance_name = var.name
+    })
+  }
+}
+
 # --- EC2 Instance ---
 resource "aws_instance" "this" {
   ami                         = data.aws_ami.ubuntu_noble.id
@@ -106,7 +115,8 @@ resource "aws_instance" "this" {
   key_name = null
 
   # Install Docker via cloud-init
-  user_data = file("${path.module}/cloud-init.yaml")
+  #user_data = file("${path.module}/cloud-init.yaml")
+  user_data              = data.cloudinit_config.user_data.rendered
 
   tags = { Name = var.name }
 }
